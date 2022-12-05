@@ -1,0 +1,42 @@
+---
+name: Build and install ansible collection
+description: Build and install ansible collection
+
+inputs:
+  collection_namespace:
+    description: "Install collection python dependencies"
+    required: true
+  collection_name:
+    description: "Path to the collection source"
+    required: true
+  collection_version:
+    description: The final collection path
+    required: false
+  collection_repo:
+    description: The collection url
+    required: false
+outputs:
+  tar_file:
+    description: The collection tarball when built
+    value: ${{ inputs.collection_namespace }}-${{ inputs.collection_name }}-${{ inputs.collection_version }}.tar.gz
+  collection_path:
+    description: The final collection path
+    value: /home/runner/collections/ansible_collections/${{ inputs.collection_namespace }}/${{ inputs.collection_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: template galaxy file
+      run: ansible all -i 'localhost,' -c local -m template -a "src=galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }} collection_repo=${{ inputs.collection_repo }}"
+      shell: bash
+
+    - name: Build collection
+      run: ansible-galaxy collection build -vvv
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+
+    - name: Install collection
+      run: ansible-galaxy collection install ./${{ inputs.collection_namespace }}-${{ inputs.collection_name }}-${{ inputs.collection_version }}.tar.gz -p /home/runner/collections
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+...

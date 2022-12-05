@@ -1,0 +1,138 @@
+---
+name: Sanity tests
+on:
+  workflow_call:
+    inputs:
+      collection_namespace:
+        description: "Install collection python dependencies"
+        required: true
+        type: string
+      collection_name:
+        description: "Path to the collection source"
+        required: true
+        type: string
+      collection_version:
+        description: The final collection path
+        required: false
+        type: string
+      collection_repo:
+        description: The collection url
+        required: false
+        type: string
+      matrix_exclude:
+        # 2.11/3.10 not supported
+        # 2.11/3.11 not supported
+        # 2.12/3.7 not supported
+        # 2.12/3.11 not supported
+        # 2.13/3.7 not supported
+        # 2.13/3.11 not supported
+        # 2.14/3.7 not supported
+        # 2.14/3.8 not supported
+        default: >-
+          [
+            {
+              "ansible-version": "stable-2.11",
+              "python-version": "3.10"
+            },
+            {
+              "ansible-version": "stable-2.11",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.8"
+            }
+          ]
+        required: false
+        type: string
+
+jobs:
+  sanity:
+    env:
+      PY_COLORS: "1"
+      source_directory: "./source"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ansible-version:
+          - stable-2.11
+          - stable-2.12
+          - stable-2.13
+          - stable-2.14
+          - milestone
+          - devel
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        exclude: ${{ fromJSON(inputs.matrix_exclude) }}
+    runs-on: ${{ matrix.os }}
+
+    name: "py${{ matrix.python-version }} / ${{ matrix.os }} / ${{ matrix.ansible-version }}"
+    steps:
+      - name: Checkout the collection repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install ansible-core (${{ matrix.ansible-version }})
+        run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
+
+      - name: Build and install the collection
+        uses: sean-m-sullivan/infra_git_ci_cd/actions/build_ansible_collection@main
+        with:
+          collection_namespace: ${{ inputs.collection_namespace }}
+          collection_name: ${{ inputs.collection_name }}
+          collection_version: ${{ inputs.collection_version }}
+          collection_repo: ${{ inputs.collection_repo }}
+
+      - name: Print the ansible version
+        run: ansible --version
+
+      - name: Run sanity tests
+        run: ansible-test sanity --requirements --color --python ${{ matrix.python-version }}
+        working-directory: /home/runner/collections/ansible_collections/${{ inputs.collection_namespace }}/${{ inputs.collection_name }}
+...
