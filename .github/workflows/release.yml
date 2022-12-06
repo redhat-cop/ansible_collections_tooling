@@ -45,7 +45,7 @@ jobs:
 
       - name: Build and install the collection
         id: build
-        uses: sean-m-sullivan/infra_git_ci_cd/actions/build_ansible_collection@main
+        uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection@main
         with:
           collection_namespace: ${{ inputs.collection_namespace }}
           collection_name: ${{ inputs.collection_name }}
