@@ -122,7 +122,7 @@ jobs:
         run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
 
       - name: Build and install the collection
-        uses: sean-m-sullivan/infra_git_ci_cd/actions/build_ansible_collection@main
+        uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection@main
         with:
           collection_namespace: ${{ inputs.collection_namespace }}
           collection_name: ${{ inputs.collection_name }}
