@@ -28,7 +28,7 @@ jobs:
   pre-commit:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main"
   sanity:
-    uses: "redhat-cop/ansible_collections_tooling/.github/workflows/sanity.yml@main"
+    uses: "sean-m-sullivan/ansible_collections_tooling/.github/workflows/sanity.yml@main"
     with:
       collection_namespace: ${{ inputs.collection_namespace }}
       collection_name: ${{ inputs.collection_name }}
