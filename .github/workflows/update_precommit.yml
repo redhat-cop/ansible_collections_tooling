@@ -33,7 +33,9 @@ jobs:
       - name: Install Ansible
         run: pip install --upgrade ansible-core
 
-      - uses: pre-commit/action@v3.0.0
+      - name: Run Pre-commit to alert of any linting changes.
+        continue-on-error: true
+        uses: pre-commit/action@v3.0.0
 
       - name: Create Pull Request
         id: prcreate
