@@ -63,7 +63,7 @@ jobs:
       - prechecks
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
     with:
-      collection_namespace: ${{ inputs.collection_namespace }}
+      collection_namespace: ${{ inputs.collection_namespace_2 }}
       collection_name: ${{ inputs.collection_name }}
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
@@ -75,7 +75,7 @@ jobs:
       - cop_release
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
     with:
-      collection_namespace: ${{ inputs.collection_namespace_2 }}
+      collection_namespace: ${{ inputs.collection_namespace }}
       collection_name: ${{ inputs.collection_name }}
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
@@ -106,7 +106,7 @@ jobs:
       - release_check
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
     with:
-      collection_namespace: ${{ inputs.collection_namespace_2 }}
+      collection_namespace: ${{ inputs.collection_namespace }}
       collection_name: ${{ inputs.collection_name }}
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
