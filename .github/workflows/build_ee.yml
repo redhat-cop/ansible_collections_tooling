@@ -1,0 +1,39 @@
+---
+name: Build and deploy new EE
+
+on:
+  workflow_call:
+    inputs:
+      quay_username:
+        description: "username/namespace to upload the EE to"
+        required: true
+        type: string
+    secrets:
+      quay_token:
+        description: token for quay
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install --upgrade ansible-core ansible-builder
+
+      - name: Install Collections
+        run: ansible-galaxy collection install -f -r .github/deploy_ee/requirements.yml
+
+      - name: Docker login
+        run: docker login -u="${{ inputs.quay_username }}+github_action" -p="${{ secrets.quay_token }}" quay.io
+
+      - name: Run Ansible Playbook
+        run: ansible-playbook .github/deploy_ee/build_ee.yml -i .github/deploy_ee/inventory_ci.yml -l dev -e "ee_registry_username=${{ inputs.quay_username }}+github_action" -e "ee_registry_password=${{ secrets.quay_token }}" --connection=local -e "ee_registry_dest=quay.io/${{ inputs.quay_username }}/config_as_code_ee" -vvv
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
+...

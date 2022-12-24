@@ -93,6 +93,14 @@ jobs:
           '${{ needs.infra_release.result }}',
           '${{ needs.cop_release.result }}',
           ]) == {'success'}"
+  deployEE:
+    needs:
+      - release_check
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/build_ee.yml@main
+    with:
+      quay_username: ${{ inputs.quay_username }}
+    secrets:
+      quay_token: ${{ secrets.quay_token }}
   changelog:
     needs:
       - release_check
