@@ -34,11 +34,17 @@ jobs:
       collection_name: ${{ inputs.collection_name }}
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: gaurav-nelson/github-action-markdown-link-check@v1
   all_green:
     if: ${{ always() }}
     needs:
       - pre-commit
       - sanity
+      - markdown-link-check
     runs-on: ubuntu-latest
     steps:
       - run: >-
