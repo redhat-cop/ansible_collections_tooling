@@ -26,6 +26,10 @@ on:
         description: The collection url
         required: false
         type: string
+      quay_username:
+        description: "username/namespace to upload the EE to"
+        required: true
+        type: string
     secrets:
       galaxy_api_key:
         description: API key for galaxy
@@ -35,6 +39,9 @@ on:
         required: true
       token:
         description: token for uploading tarballs to a release
+        required: true
+      quay_token:
+        description: token for quay
         required: true
 
 jobs:
