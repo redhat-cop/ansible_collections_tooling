@@ -1,7 +1,7 @@
 ---
 - name: Playbook to configure execution environments
   hosts: builder
-  gather_facts: true
+  gather_facts: false
   # vars_files:
   #   - "../vaults/{{ env }}.yml"
   pre_tasks:
@@ -35,6 +35,7 @@
       ansible.builtin.include_role:
         name: infra.ee_utilities.ee_builder
       vars:
+        ee_pull_collections_from_hub: false
         ee_list:
           - ee_name: config_as_code_ee
             bindep:
@@ -50,5 +51,4 @@
               - name: awx.awx
             append:
               - RUN dnf update -y
-              # - RUN pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U
 ...
