@@ -37,7 +37,7 @@
       vars:
         ee_pull_collections_from_hub: false
         ee_list:
-          - ee_name: config_as_code_ee
+          - name: config_as_code_ee
             bindep:
               - unzip
             python:
