@@ -46,7 +46,7 @@ jobs:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch-suffix: random
+          branch: create-pull-request/update-pre-commit
           delete-branch: true
           title: 'Update pre-commit'
           body: |
