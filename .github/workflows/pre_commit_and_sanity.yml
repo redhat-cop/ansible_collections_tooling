@@ -23,10 +23,16 @@ on:
         description: The collection url
         required: false
         type: string
+      collection_dependencies:
+        description: The collection dependencies (as a space separated list)
+        required: false
+        type: string
 
 jobs:
   pre-commit:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main"
+    with:
+      collection_dependencies: ${{ inputs.collection_dependencies }}
   sanity:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/sanity.yml@main"
     with:
