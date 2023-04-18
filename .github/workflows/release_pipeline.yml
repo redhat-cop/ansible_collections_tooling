@@ -30,6 +30,10 @@ on:
         description: "username/namespace to upload the EE to"
         required: true
         type: string
+      collection_dependencies:
+        description: The collection dependencies (as a space separated list)
+        required: false
+        type: string
     secrets:
       galaxy_api_key:
         description: API key for galaxy
@@ -47,6 +51,12 @@ on:
 jobs:
   pre-commit:
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace }}
+      collection_name: ${{ inputs.collection_name }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+      collection_dependencies: ${{ inputs.collection_dependencies }}
   sanity:
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/sanity.yml@main
     with:
