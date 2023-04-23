@@ -10,10 +10,6 @@ on:
         description: First namespace to push to as in 'infra'
         required: true
         type: string
-      collection_namespace_2:
-        description: Second namespace like redhat_cop
-        required: true
-        type: string
       collection_name:
         description: "Path to the collection source"
         required: true
@@ -36,9 +32,6 @@ on:
         type: string
     secrets:
       galaxy_api_key:
-        description: API key for galaxy
-        required: true
-      infra_api_key:
         description: API key for galaxy
         required: true
       token:
@@ -75,21 +68,9 @@ jobs:
           '${{ needs.pre-commit.result }}',
           '${{ needs.sanity.result }}',
           ]) == {'success'}"
-  cop_release:
-    needs:
-      - prechecks
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
-    with:
-      collection_namespace: ${{ inputs.collection_namespace_2 }}
-      collection_name: ${{ inputs.collection_name }}
-      collection_version: ${{ inputs.collection_version }}
-      collection_repo: ${{ inputs.collection_repo }}
-    secrets:
-      api_key: ${{ secrets.galaxy_api_key }}
-      token: ${{ secrets.token }}
   infra_release:
     needs:
-      - cop_release
+      - prechecks
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace }}
@@ -97,22 +78,11 @@ jobs:
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
     secrets:
-      api_key: ${{ secrets.infra_api_key }}
+      api_key: ${{ secrets.galaxy_api_key }}
       token: ${{ secrets.token }}
-  release_check:
-    needs:
-      - cop_release
-      - infra_release
-    runs-on: ubuntu-latest
-    steps:
-      - run: >-
-          python -c "assert set([
-          '${{ needs.infra_release.result }}',
-          '${{ needs.cop_release.result }}',
-          ]) == {'success'}"
   deployEE:
     needs:
-      - release_check
+      - infra_release
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/build_ee.yml@main
     with:
       quay_username: ${{ inputs.quay_username }}
@@ -120,7 +90,7 @@ jobs:
       quay_token: ${{ secrets.quay_token }}
   changelog:
     needs:
-      - release_check
+      - infra_release
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace }}

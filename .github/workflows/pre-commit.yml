@@ -27,8 +27,6 @@ on:
         description: The collection dependencies (as a space separated list)
         required: false
         type: string
-  pull_request:
-  push:
 
 jobs:
   pre-commit:
