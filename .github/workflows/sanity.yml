@@ -19,6 +19,10 @@ on:
         description: The collection url
         required: false
         type: string
+      collection_dependencies:
+        description: The collection dependencies (as a space separated list)
+        required: false
+        type: string
       matrix_exclude:
         # 2.11/3.10 not supported
         # 2.11/3.11 not supported
@@ -125,6 +129,10 @@ jobs:
 
       - name: Install ansible-core (${{ matrix.ansible-version }})
         run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
+
+      - name: Install collection dependencies
+        run: ansible-galaxy collection install ${{ inputs.collection_dependencies }}
+        if: inputs.collection_dependencies
 
       - name: Build and install the collection
         uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection@main
