@@ -46,9 +46,6 @@ jobs:
       - name: Run changelog
         run: antsibull-changelog release --verbose --version ${{ inputs.collection_version }}
 
-      - name: Remove galaxy file
-        run: rm galaxy.yml
-
       - name: Create Pull Request
         id: prcreate
         uses: peter-evans/create-pull-request@v3
