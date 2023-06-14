@@ -38,13 +38,9 @@ jobs:
           python-version: '3.x'
       - name: Install Ansible
         run: pip install --upgrade ansible-core
-      - name: Build and install the collection
-        uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection@main
-        with:
-          collection_namespace: ${{ inputs.collection_namespace }}
-          collection_name: ${{ inputs.collection_name }}
-          collection_version: ${{ inputs.collection_version }}
-          collection_repo: ${{ inputs.collection_repo }}
+      - name: template galaxy file
+        run: ansible all -i 'localhost,' -c local -m template -a "src=galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }} collection_repo=${{ inputs.collection_repo }}"
+        shell: bash
       - name: Install collection dependencies
         run: ansible-galaxy collection install ${{ inputs.collection_dependencies }}
         if: inputs.collection_dependencies
