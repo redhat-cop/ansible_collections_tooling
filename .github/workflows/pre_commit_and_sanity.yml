@@ -30,7 +30,7 @@ on:
 
 jobs:
   pre-commit:
-    uses: "sean-m-sullivan/ansible_collections_tooling/.github/workflows/pre-commit.yml@main"
+    uses: "redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main"
     with:
       collection_namespace: ${{ inputs.collection_namespace }}
       collection_name: ${{ inputs.collection_name }}
@@ -48,12 +48,12 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        use-quiet-mode: 'yes'
-        use-verbose-mode: 'yes'
-        config-file: '.mlc_config.json'
+      - uses: actions/checkout@master
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.mlc_config.json'
   all_green:
     if: ${{ always() }}
     needs:

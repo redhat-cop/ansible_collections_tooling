@@ -36,7 +36,7 @@ runs:
       working-directory: ${{ inputs.source_path }}
 
     - name: Install collection
-      run: ansible-galaxy collection install ./${{ inputs.collection_namespace }}-${{ inputs.collection_name }}-${{ inputs.collection_version }}.tar.gz -p /home/runner/collections
+      run: ansible-galaxy collection install . -p /home/runner/collections
       shell: bash
       working-directory: ${{ inputs.source_path }}
 ...

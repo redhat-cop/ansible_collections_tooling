@@ -21,4 +21,5 @@ rules:
     allowed-values:
       - 'true'
       - 'false'
+      - 'on'
 ...
