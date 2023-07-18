@@ -38,7 +38,7 @@ jobs:
       collection_repo: ${{ inputs.collection_repo }}
       collection_dependencies: ${{ inputs.collection_dependencies }}
   sanity:
-    uses: "redhat-cop/ansible_collections_tooling/.github/workflows/sanity.yml@main"
+    uses: "sean-m-sullivan/ansible_collections_tooling/.github/workflows/sanity.yml@sanity"
     with:
       collection_namespace: ${{ inputs.collection_namespace }}
       collection_name: ${{ inputs.collection_name }}
