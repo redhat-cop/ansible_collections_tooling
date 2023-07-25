@@ -48,11 +48,28 @@ on:
         default: 'https://galaxy.ansible.com'
         required: false
         type: string
+      ah_publish_1:
+        description: Publish the collection on automation hub
+        default: false
+        type: boolean
+      ah_publish_2:
+        description: Publish the collection on automation hub
+        default: false
+        type: boolean
+      galaxy_publish_1:
+        default: true
+        description: Publish the collection on galaxy
+        type: boolean
+      galaxy_publish_2:
+        default: true
+        description: Publish the collection on galaxy
+        type: boolean
       matrix_message:
         description: The additional message to send about the release.
         default: ''
         required: false
         type: string
+
     secrets:
       collection_api_key_1:
         description: API key for galaxy
@@ -107,6 +124,8 @@ jobs:
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
       publish_url: ${{ inputs.publish_url_collection_1 }}
+      ah_publish: ${{ inputs.ah_publish_1 }}
+      galaxy_publish: ${{ inputs.galaxy_publish_1 }}
     secrets:
       api_key: ${{ secrets.collection_api_key_1 }}
       token: ${{ secrets.git_token }}
@@ -120,6 +139,8 @@ jobs:
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
       publish_url: ${{ inputs.publish_url_collection_2 }}
+      ah_publish: ${{ inputs.ah_publish_2 }}
+      galaxy_publish: ${{ inputs.galaxy_publish_2 }}
     secrets:
       api_key: ${{ secrets.collection_api_key_2 }}
       token: ${{ secrets.git_token }}
