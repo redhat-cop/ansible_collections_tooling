@@ -70,7 +70,7 @@ jobs:
         run: ansible-galaxy collection publish --api-key=${{ secrets.api_key }} ${{ steps.build.outputs.tar_file }} --server ${{ inputs.publish_url }}
 
       - name: "Publish the collection on Automation Hub"
-        if: ${{ inputs.ah_publish }} # failed automationhub job not prohibit galaxy job
+        if: ${{ inputs.ah_publish }}  # failed automationhub job not prohibit galaxy job
         run: |
           cat << EOF > ansible.cfg
           [galaxy]
