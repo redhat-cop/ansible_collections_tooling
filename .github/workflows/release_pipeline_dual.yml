@@ -103,6 +103,7 @@ jobs:
       collection_name: ${{ inputs.collection_name_1 }}
       collection_version: ${{ inputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
+      collection_dependencies: ${{ inputs.collection_dependencies }}
   prechecks:
     needs:
       - pre-commit
