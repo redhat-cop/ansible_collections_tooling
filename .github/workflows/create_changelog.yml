@@ -40,7 +40,7 @@ jobs:
         run: pip install --upgrade ansible-core antsibull-changelog
 
       - name: template galaxy file (appended version with -devel as this will remain in repo)
-        run: ansible all -i 'localhost,' -c local -m template -a "src=galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }}-devel collection_repo=${{ inputs.collection_repo }}"
+        run: ansible all -i 'localhost,' -c local -m template -a "src=.github/files/galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }}-devel collection_repo=${{ inputs.collection_repo }}"
         shell: bash
 
       - name: Run changelog
