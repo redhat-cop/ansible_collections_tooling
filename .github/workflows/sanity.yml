@@ -137,6 +137,9 @@ jobs:
           collection_version: ${{ inputs.collection_version }}
           collection_repo: ${{ inputs.collection_repo }}
 
+      - name: Move ansible.cfg if exists
+        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
+
       - name: Print the ansible version
         run: ansible --version
 
