@@ -53,6 +53,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Move ansible.cfg if exists
+        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
+
       - name: Install Ansible
         run: pip install --upgrade ansible-core
 
