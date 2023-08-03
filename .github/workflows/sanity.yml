@@ -122,6 +122,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Move ansible.cfg if exists
+        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
+
       - name: Install ansible-core (${{ matrix.ansible-version }})
         run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
 
@@ -136,9 +139,6 @@ jobs:
           collection_name: ${{ inputs.collection_name }}
           collection_version: ${{ inputs.collection_version }}
           collection_repo: ${{ inputs.collection_repo }}
-
-      - name: Move ansible.cfg if exists
-        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
 
       - name: Print the ansible version
         run: ansible --version
