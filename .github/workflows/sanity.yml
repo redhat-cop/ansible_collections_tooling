@@ -3,87 +3,8 @@ name: Sanity tests
 on:
   workflow_call:
     inputs:
-      collection_namespace:
-        description: "Install collection python dependencies"
-        required: true
-        type: string
-      collection_name:
-        description: "Path to the collection source"
-        required: true
-        type: string
-      collection_version:
-        description: The final collection path
-        required: false
-        type: string
-      collection_repo:
-        description: The collection url
-        required: false
-        type: string
       collection_dependencies:
         description: The collection dependencies (as a space separated list)
-        required: false
-        type: string
-      matrix_exclude:
-        # this entire check is from https://github.com/ansible-network/github_actions/blob/main/.github/workflows/sanity.yml
-        # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix
-        # 2.13 supports Python 3.8-3.10
-        # 2.14 supports Python 3.9-3.11
-        # 2.15 supports Python 3.9-3.11
-        # 2.16 supports Python 3.10-3.11
-        # https://docs.ansible.com/ansible/devel/roadmap/ROADMAP_2_16.html
-        # milestone is 2.16 until after 2.16 branches from devel
-        # devel is 2.16 until 2023-09-18
-        default: >-
-          [
-            {
-              "ansible-version": "stable-2.13",
-              "python-version": "3.7"
-            },
-            {
-              "ansible-version": "stable-2.13",
-              "python-version": "3.11"
-            },
-            {
-              "ansible-version": "stable-2.14",
-              "python-version": "3.7"
-            },
-            {
-              "ansible-version": "stable-2.14",
-              "python-version": "3.8"
-            },
-            {
-              "ansible-version": "stable-2.15",
-              "python-version": "3.7"
-            },
-            {
-              "ansible-version": "stable-2.15",
-              "python-version": "3.8"
-            },
-            {
-              "ansible-version": "milestone",
-              "python-version": "3.7"
-            },
-            {
-              "ansible-version": "milestone",
-              "python-version": "3.8"
-            },
-            {
-              "ansible-version": "milestone",
-              "python-version": "3.9"
-            },
-            {
-              "ansible-version": "devel",
-              "python-version": "3.7"
-            },
-            {
-              "ansible-version": "devel",
-              "python-version": "3.8"
-            },
-            {
-              "ansible-version": "devel",
-              "python-version": "3.9"
-            }
-          ]
         required: false
         type: string
 
@@ -97,53 +18,23 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        ansible-version:
+        ansible:
           - stable-2.13
           - stable-2.14
           - stable-2.15
           - milestone
           - devel
-        python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
-        exclude: ${{ fromJSON(inputs.matrix_exclude) }}
+
     runs-on: ${{ matrix.os }}
 
-    name: "py${{ matrix.python-version }} / ${{ matrix.os }} / ${{ matrix.ansible-version }}"
+    name: "ansible ${{ matrix.ansible }} sanity"
     steps:
-      - name: Checkout the collection repository
-        uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Perform sanity testing
+        uses: ansible-community/ansible-test-gh-action@release/v1
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Move ansible.cfg if exists
-        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
-
-      - name: Install ansible-core (${{ matrix.ansible-version }})
-        run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
-
-      - name: Install collection dependencies
-        run: ansible-galaxy collection install ${{ inputs.collection_dependencies }}
-        if: inputs.collection_dependencies
-
-      - name: Build and install the collection
-        uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection@main
-        with:
-          collection_namespace: ${{ inputs.collection_namespace }}
-          collection_name: ${{ inputs.collection_name }}
-          collection_version: ${{ inputs.collection_version }}
-          collection_repo: ${{ inputs.collection_repo }}
-
-      - name: Print the ansible version
-        run: ansible --version
-
-      - name: Run sanity tests
-        run: ansible-test sanity --requirements --color --python ${{ matrix.python-version }}
-        working-directory: /home/runner/collections/ansible_collections/${{ inputs.collection_namespace }}/${{ inputs.collection_name }}
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: sanity
+          test-deps: ${{ inputs.collection_dependencies }}
+          pull-request-change-detection: true
 ...
