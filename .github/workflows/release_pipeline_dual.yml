@@ -193,6 +193,7 @@ jobs:
           homeserver: 'matrix.org'
           token: ${{ secrets.matrix_token }}
           channel: '!ccrdinGkMeyakqWzIM:matrix.org'  # This is our room
+          messagetype: 'm.text'
           message: |
             ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ inputs.collection_version }} has been released.\
             ${{ inputs.matrix_message }}\
