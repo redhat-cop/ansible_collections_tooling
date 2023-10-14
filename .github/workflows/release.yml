@@ -24,7 +24,7 @@ on:
         type: string
       publish_url:
         description: The url to publish to
-        default: 'https://galaxy.ansible.com'
+        default: 'https://galaxy.ansible.com/api/'
         required: false
         type: string
       ah_publish:
