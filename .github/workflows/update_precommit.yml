@@ -18,7 +18,7 @@ jobs:
     env:
       ANSIBLE_FORCE_COLOR: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install pre-commit
         run: pip install --upgrade pre-commit
@@ -26,7 +26,7 @@ jobs:
       - name: Update pre-commit
         run: pre-commit autoupdate
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -35,11 +35,11 @@ jobs:
 
       - name: Run Pre-commit to alert of any linting changes.
         continue-on-error: true
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
 
       - name: Create Pull Request
         id: prcreate
-        uses: peter-evans/create-pull-request@v4.2.3
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.token }}
           commit-message: Update pre-commit
