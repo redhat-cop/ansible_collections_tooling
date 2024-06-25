@@ -41,6 +41,8 @@ jobs:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/sanity.yml@main"
     with:
       collection_dependencies: ${{ inputs.collection_dependencies }}
+  build-import:
+    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@main
   markdown-link-check:
     runs-on: ubuntu-latest
     steps:
