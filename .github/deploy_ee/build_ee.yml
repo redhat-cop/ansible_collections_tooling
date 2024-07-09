@@ -1,54 +1,53 @@
 ---
 - name: Playbook to configure execution environments
-  hosts: builder
+  hosts: localhost
+  connection: local
   gather_facts: false
-  # vars_files:
-  #   - "../vaults/{{ env }}.yml"
   pre_tasks:
     - name: Validate that ansible-builder is installed on target system
       block:
-        - name: Try command
+        - name: Try command  # noqa command-instead-of-shell
           ansible.builtin.shell: ansible-builder --version
           register: r_builder
           changed_when: false
       rescue:
-        - name: Try to install with rpms
-          block:
-            - name: Install ansible-builder from rpm
-              ansible.builtin.dnf:
-                name:
-                  - ansible-builder
-                  - ansible-core
-                enablerepo: ansible-automation-platform-2.2-for-rhel-8-x86_64-rpms
-                state: present
-              become: true
-          rescue:
-            - name: Install ansible-builder from pip
-              ansible.builtin.pip:
-                name:
-                  - ansible-builder
-                  - ansible-core
-                state: latest
+        - name: Install ansible-builder from pip  # noqa package-latest
+          ansible.builtin.pip:
+            name:
+              - ansible-builder
+              - ansible-core
+            state: latest
 
   tasks:
     - name: Include ee_builder role
       ansible.builtin.include_role:
-        name: infra.ee_utilities.ee_builder
+        name: ee_builder
       vars:
         ee_pull_collections_from_hub: false
+        ee_container_runtime: podman
+        ee_base_image: quay.io/centos/centos:stream9
         ee_list:
           - name: config_as_code_ee
-            bindep:
-              - unzip
-            python:
-              - ansible-lint
-              - netaddr
-            collections:
-              - name: infra.controller_configuration
-              - name: infra.ah_configuration
-              - name: infra.ee_utilities
-              - name: infra.aap_utilities
-              - name: awx.awx
-            append:
-              - RUN dnf update -y
+            dependencies:
+              ansible_core:
+                package_pip: ansible-core
+              ansible_runner:
+                package_pip: ansible-runner
+              system:
+                - unzip
+              python:
+                - ansible-lint
+                - netaddr
+              galaxy:
+                collections:
+                  - infra.controller_configuration
+                  - infra.ah_configuration
+                  - infra.eda_configuration
+                  - infra.ee_utilities
+                  - infra.aap_utilities
+                  - awx.awx
+            build_steps:
+              append_final:
+                - RUN yum update -y
+                - RUN cat /etc/redhat-r*
 ...
