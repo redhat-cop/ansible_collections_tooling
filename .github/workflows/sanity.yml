@@ -19,9 +19,9 @@ jobs:
         os:
           - ubuntu-latest
         ansible:
-          - stable-2.14
           - stable-2.15
           - stable-2.16
+          - stable-2.17
           - milestone
           - devel
 
