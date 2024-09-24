@@ -48,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.collection_version }}
 
       - uses: actions/setup-python@v5
         with:
@@ -91,6 +93,6 @@ jobs:
         with:
           repo_token: ${{ secrets.token }}
           file: ${{ steps.build.outputs.tar_file }}
-          tag: ${{ github.ref }}
+          tag: ${{ inputs.collection_version }}
           overwrite: true
 ...
