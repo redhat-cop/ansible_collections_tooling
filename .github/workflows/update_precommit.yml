@@ -37,6 +37,9 @@ jobs:
         continue-on-error: true
         uses: pre-commit/action@v3.0.1
 
+      - name: Remove .ansible folder
+        run: rm -rf .ansible
+
       - name: Create Pull Request
         id: prcreate
         uses: peter-evans/create-pull-request@v6
