@@ -35,6 +35,10 @@ on:
         default: true
         description: Publish the collection on galaxy
         type: boolean
+      code_branch:
+        default: ${{ inputs.collection_version }}
+        description: Where to pull the code from
+        type: string
     secrets:
       api_key:
         description: API key for galaxy
@@ -49,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.collection_version }}
+          ref: ${{ inputs.code_branch }}
 
       - uses: actions/setup-python@v5
         with:
