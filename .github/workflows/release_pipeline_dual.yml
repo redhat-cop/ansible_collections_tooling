@@ -111,9 +111,20 @@ jobs:
           '${{ needs.pre-commit.result }}',
           '${{ needs.sanity.result }}',
           ]) == {'success'}"
-  release_collection_1:
+  changelog:
     needs:
       - prechecks
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace_1 }}
+      collection_name: ${{ inputs.collection_name_1 }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+    secrets:
+      token: ${{ secrets.git_token }}
+  release_collection_1:
+    needs:
+      - changelog
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_1 }}
@@ -123,6 +134,7 @@ jobs:
       publish_url: ${{ inputs.publish_url_collection_1 }}
       ah_publish: ${{ inputs.ah_publish_1 }}
       galaxy_publish: ${{ inputs.galaxy_publish_1 }}
+      code_branch: changelog-patches
     secrets:
       api_key: ${{ secrets.collection_api_key_1 }}
       token: ${{ secrets.git_token }}
@@ -138,6 +150,7 @@ jobs:
       publish_url: ${{ inputs.publish_url_collection_2 }}
       ah_publish: ${{ inputs.ah_publish_2 }}
       galaxy_publish: ${{ inputs.galaxy_publish_2 }}
+      code_branch: changelog-patches
     secrets:
       api_key: ${{ secrets.collection_api_key_2 }}
       token: ${{ secrets.git_token }}
@@ -160,17 +173,6 @@ jobs:
       quay_username: ${{ inputs.quay_username }}
     secrets:
       quay_token: ${{ secrets.quay_token }}
-  changelog:
-    needs:
-      - release_check
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
-    with:
-      collection_namespace: ${{ inputs.collection_namespace_1 }}
-      collection_name: ${{ inputs.collection_name_1 }}
-      collection_version: ${{ inputs.collection_version }}
-      collection_repo: ${{ inputs.collection_repo }}
-    secrets:
-      token: ${{ secrets.git_token }}
   send-message:
     needs:
       - release_check
