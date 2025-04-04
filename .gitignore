@@ -19,3 +19,4 @@ collections/*
 
 # Ignore test directory
 test
+.ansible/
