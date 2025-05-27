@@ -60,6 +60,7 @@ jobs:
       - run: >-
           python -c "assert set([
           '${{ needs.pre-commit.result }}',
-          '${{ needs.sanity.result }}',
+          '${{ needs.build-import.result }}',
+          '${{ needs.markdown-link-check.result }}',
           ]) == {'success'}"
 ...
