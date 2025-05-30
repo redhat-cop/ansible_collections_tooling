@@ -1,0 +1,202 @@
+---
+# This workflow action will run pre-commit, which will execute ansible and yaml linting
+# See .pre-commit-config.yaml for what hooks are executed
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      collection_namespace_1:
+        description: First namespace to push to as in 'infra'
+        required: true
+        type: string
+      collection_namespace_2:
+        description: Second namespace like redhat_cop
+        required: true
+        type: string
+      collection_name_1:
+        description: "Path to the collection source"
+        required: true
+        type: string
+      collection_name_2:
+        description: "Path to the collection source"
+        required: true
+        type: string
+      collection_version:
+        description: The final collection path
+        required: false
+        type: string
+      collection_repo:
+        description: The collection url
+        required: false
+        type: string
+      quay_username:
+        description: "username/namespace to upload the EE to"
+        required: true
+        type: string
+      collection_dependencies:
+        description: The collection dependencies (as a space separated list)
+        required: false
+        type: string
+      publish_url_collection_1:
+        description: The url to publish to
+        default: 'https://galaxy.ansible.com'
+        required: false
+        type: string
+      publish_url_collection_2:
+        description: The url to publish to
+        default: 'https://galaxy.ansible.com'
+        required: false
+        type: string
+      ah_publish_1:
+        description: Publish the collection on automation hub
+        default: false
+        type: boolean
+      ah_publish_2:
+        description: Publish the collection on automation hub
+        default: false
+        type: boolean
+      galaxy_publish_1:
+        default: true
+        description: Publish the collection on galaxy
+        type: boolean
+      galaxy_publish_2:
+        default: true
+        description: Publish the collection on galaxy
+        type: boolean
+      matrix_message:
+        description: The additional message to send about the release.
+        default: ''
+        required: false
+        type: string
+
+    secrets:
+      collection_api_key_1:
+        description: API key for galaxy
+        required: true
+      collection_api_key_2:
+        description: API key for galaxy
+        required: true
+      git_token:
+        description: token for uploading tarballs to a release
+        required: true
+      quay_token:
+        description: token for quay
+        required: true
+      matrix_token:
+        description: token for quay
+        required: true
+
+jobs:
+  pre-commit:
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace_1 }}
+      collection_name: ${{ inputs.collection_name_1 }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+      collection_dependencies: ${{ inputs.collection_dependencies }}
+    secrets:
+      ansible_ah_token: ${{ secrets.collection_api_key_2 }}
+  prechecks:
+    needs:
+      - pre-commit
+      - sanity
+    runs-on: ubuntu-latest
+    steps:
+      - run: >-
+          python -c "assert set([
+          '${{ needs.pre-commit.result }}',
+          '${{ needs.sanity.result }}',
+          ]) == {'success'}"
+  changelog:
+    needs:
+      - prechecks
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace_1 }}
+      collection_name: ${{ inputs.collection_name_1 }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+    secrets:
+      token: ${{ secrets.git_token }}
+  release_collection_1:
+    needs:
+      - changelog
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace_1 }}
+      collection_name: ${{ inputs.collection_name_1 }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+      publish_url: ${{ inputs.publish_url_collection_1 }}
+      ah_publish: ${{ inputs.ah_publish_1 }}
+      galaxy_publish: ${{ inputs.galaxy_publish_1 }}
+      code_branch: changelog-patches
+    secrets:
+      api_key: ${{ secrets.collection_api_key_1 }}
+      token: ${{ secrets.git_token }}
+  release_collection_2:
+    needs:
+      - release_collection_1
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
+    with:
+      collection_namespace: ${{ inputs.collection_namespace_2 }}
+      collection_name: ${{ inputs.collection_name_2 }}
+      collection_version: ${{ inputs.collection_version }}
+      collection_repo: ${{ inputs.collection_repo }}
+      publish_url: ${{ inputs.publish_url_collection_2 }}
+      ah_publish: ${{ inputs.ah_publish_2 }}
+      galaxy_publish: ${{ inputs.galaxy_publish_2 }}
+      code_branch: changelog-patches
+    secrets:
+      api_key: ${{ secrets.collection_api_key_2 }}
+      token: ${{ secrets.git_token }}
+  release_check:
+    needs:
+      - release_collection_1
+      - release_collection_2
+    runs-on: ubuntu-latest
+    steps:
+      - run: >-
+          python -c "assert set([
+          '${{ needs.release_collection_1.result }}',
+          '${{ needs.release_collection_2.result }}',
+          ]) == {'success'}"
+  deployEE:
+    needs:
+      - release_check
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/build_ee.yml@main
+    with:
+      quay_username: ${{ inputs.quay_username }}
+    secrets:
+      quay_token: ${{ secrets.quay_token }}
+  send-message:
+    needs:
+      - release_check
+    runs-on: ubuntu-latest
+    name: Send message via Matrix
+    steps:
+      - name: Send message to newsbot channel
+        uses: fadenb/matrix-chat-message@v0.0.6
+        with:
+          homeserver: 'matrix.org'
+          token: ${{ secrets.matrix_token }}
+          channel: '!pMZboYFCScZJfXmOtH:ansible.im'  # This is Ansible Social
+          messagetype: 'm.text'
+          message: |
+            @newsbot ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ inputs.collection_version }} has been released.\
+            ${{ inputs.matrix_message }}\
+            Visit ${{ inputs.collection_repo }} For more information and updates.
+      - name: Send message to our channel
+        uses: fadenb/matrix-chat-message@v0.0.6
+        with:
+          homeserver: 'matrix.org'
+          token: ${{ secrets.matrix_token }}
+          channel: '!ccrdinGkMeyakqWzIM:matrix.org'  # This is our room
+          messagetype: 'm.text'
+          message: |
+            ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ inputs.collection_version }} has been released.\
+            ${{ inputs.matrix_message }}\
+            Visit ${{ inputs.collection_repo }} For more information and updates.
+...

@@ -1,0 +1,103 @@
+---
+# This workflow action will run pre-commit, which will execute ansible and yaml linting
+# See .pre-commit-config.yaml for what hooks are executed
+name: Release Collection
+
+on:
+  workflow_call:
+    inputs:
+      collection_namespace:
+        description: "Install collection python dependencies"
+        required: true
+        type: string
+      collection_name:
+        description: "Path to the collection source"
+        required: true
+        type: string
+      collection_version:
+        description: The final collection path
+        required: false
+        type: string
+      collection_repo:
+        description: The collection url
+        required: false
+        type: string
+      publish_url:
+        description: The url to publish to
+        default: 'https://galaxy.ansible.com/api/'
+        required: false
+        type: string
+      ah_publish:
+        description: Publish the collection on automation hub
+        default: false
+        type: boolean
+      galaxy_publish:
+        default: true
+        description: Publish the collection on galaxy
+        type: boolean
+      code_branch:
+        default: ${{ inputs.collection_version }}
+        description: Where to pull the code from
+        type: string
+    secrets:
+      api_key:
+        description: API key for galaxy
+        required: true
+      token:
+        description: token for uploading tarballs to a release
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.code_branch }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Move ansible.cfg if exists
+        run: mv .github/files/ansible.cfg . || echo "Nothing to move"
+
+      - name: Install Ansible
+        run: pip install --upgrade ansible-core
+
+      - name: Build and install the collection
+        id: build
+        uses: redhat-cop/ansible_collections_tooling/actions/build_ansible_collection_crc@main
+        with:
+          collection_namespace: ${{ inputs.collection_namespace }}
+          collection_name: ${{ inputs.collection_name }}
+          collection_version: ${{ inputs.collection_version }}
+          collection_repo: ${{ inputs.collection_repo }}
+          ansible_ah_token: ${{ secrets.api_key }}
+
+      - name: Publish to galaxy
+        if: ${{ inputs.galaxy_publish }}
+        run: ansible-galaxy collection publish --api-key=${{ secrets.api_key }} ${{ steps.build.outputs.tar_file }} --server ${{ inputs.publish_url }}
+
+      - name: "Publish the collection on Automation Hub"
+        if: ${{ inputs.ah_publish }}  # failed automationhub job not prohibit galaxy job
+        run: |
+          cat << EOF > ansible.cfg
+          [galaxy]
+          server_list = rh_automation_hub
+          [galaxy_server.rh_automation_hub]
+          url=https://cloud.redhat.com/api/automation-hub/
+          auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+          token=${{ secrets.api_key }}
+          EOF
+          ansible-galaxy collection publish ${{ steps.build.outputs.tar_file }}
+          rm ansible.cfg
+
+      - name: Upload files to tag
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.token }}
+          file: ${{ steps.build.outputs.tar_file }}
+          tag: ${{ inputs.collection_version }}
+          overwrite: true
+...
