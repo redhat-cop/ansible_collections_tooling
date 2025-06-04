@@ -22,10 +22,6 @@ on:
         description: "Path to the collection source"
         required: true
         type: string
-      collection_version:
-        description: The final collection path
-        required: false
-        type: string
       collection_repo:
         description: The collection url
         required: false
@@ -89,68 +85,118 @@ on:
 
 jobs:
   pre-commit:
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit.yml@main
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit_crc.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_1 }}
       collection_name: ${{ inputs.collection_name_1 }}
-      collection_version: ${{ inputs.collection_version }}
+      collection_version: 1.0.0-ci
       collection_repo: ${{ inputs.collection_repo }}
       collection_dependencies: ${{ inputs.collection_dependencies }}
     secrets:
       ansible_ah_token: ${{ secrets.collection_api_key_2 }}
+
   prechecks:
     needs:
       - pre-commit
-      - sanity
     runs-on: ubuntu-latest
     steps:
       - run: >-
           python -c "assert set([
           '${{ needs.pre-commit.result }}',
-          '${{ needs.sanity.result }}',
           ]) == {'success'}"
-  changelog:
+
+  calculate_version:
+    name: Calculate Collection Version
     needs:
       - prechecks
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog.yml@main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get the most recent tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        id: get-latest-tag
+        with:
+          semver_only: true
+
+      - name: Calculate bump level
+        id: bump_level
+        shell: bash
+        run: .github/files/calculate_change.sh
+
+      - name: Bump version
+        uses: actions-ecosystem/action-bump-semver@v1
+        id: bump-semver
+        with:
+          current_version: ${{ steps.get-latest-tag.outputs.tag }}
+          level: ${{ steps.bump_level.outputs.level }}
+    outputs:
+      collection_version: ${{ steps.bump-semver.outputs.new_version }}
+      change_level: ${{ steps.bump_level.outputs.level }}
+      change_present: ${{ steps.bump_level.outputs.change_present }}
+
+  changelog:
+    needs:
+      - calculate_version
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog_crc.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_1 }}
       collection_name: ${{ inputs.collection_name_1 }}
-      collection_version: ${{ inputs.collection_version }}
+      collection_version: ${{ needs.calculate_version.outputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
     secrets:
       token: ${{ secrets.git_token }}
-  release_collection_1:
+
+  create_github_release:
+    name: Create GitHub Release
     needs:
       - changelog
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
+      - calculate_version
+    runs-on: ubuntu-latest
+    if: (needs.calculate_version.outputs.change_level != 'major' && needs.calculate_version.outputs.change_present != 'false') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Create Github Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.calculate_version.outputs.collection_version }}
+          generate_release_notes: true
+
+  release_collection_1:
+    needs:
+      - create_github_release
+      - calculate_version
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release_crc.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_1 }}
       collection_name: ${{ inputs.collection_name_1 }}
-      collection_version: ${{ inputs.collection_version }}
+      collection_version: ${{ needs.calculate_version.outputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
       publish_url: ${{ inputs.publish_url_collection_1 }}
       ah_publish: ${{ inputs.ah_publish_1 }}
       galaxy_publish: ${{ inputs.galaxy_publish_1 }}
-      code_branch: changelog-patches
+      code_branch: release/${{ needs.calculate_version.outputs.collection_version }}
     secrets:
-      api_key: ${{ secrets.collection_api_key_1 }}
+      api_push_key: ${{ secrets.collection_api_key_1 }}
+      api_pull_key: ${{ secrets.collection_api_key_2 }}
       token: ${{ secrets.git_token }}
   release_collection_2:
     needs:
-      - release_collection_1
-    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release.yml@main
+      - create_github_release
+      - calculate_version
+    uses: redhat-cop/ansible_collections_tooling/.github/workflows/release_crc.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_2 }}
       collection_name: ${{ inputs.collection_name_2 }}
-      collection_version: ${{ inputs.collection_version }}
+      collection_version: ${{ needs.calculate_version.outputs.collection_version }}
       collection_repo: ${{ inputs.collection_repo }}
       publish_url: ${{ inputs.publish_url_collection_2 }}
       ah_publish: ${{ inputs.ah_publish_2 }}
       galaxy_publish: ${{ inputs.galaxy_publish_2 }}
-      code_branch: changelog-patches
+      code_branch: release/${{ needs.calculate_version.outputs.collection_version }}
     secrets:
-      api_key: ${{ secrets.collection_api_key_2 }}
+      api_push_key: ${{ secrets.collection_api_key_2 }}
+      api_pull_key: ${{ secrets.collection_api_key_2 }}
       token: ${{ secrets.git_token }}
   release_check:
     needs:
@@ -163,9 +209,44 @@ jobs:
           '${{ needs.release_collection_1.result }}',
           '${{ needs.release_collection_2.result }}',
           ]) == {'success'}"
-  deployEE:
+  merge_release:
     needs:
       - release_check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: release/${{ needs.calculate_version.outputs.collection_version }}
+      - name: Create Pull Request
+        id: prcreate
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.token }}
+          base: devel
+          branch: release/${{ needs.calculate_version.outputs.collection_version }}
+          delete-branch: false
+          title: '[RELEASE] Update changelog ${{ needs.calculate_version.outputs.collection_version }}'
+          body: |
+            Update changelog
+            - Updated with changelog for release ${{ needs.calculate_version.outputs.collection_version }}
+            - Auto-generated by [create-pull-request]
+          labels: |
+            changelog
+            automated pr
+          draft: false
+      - name: Auto approve PR
+        if: steps.prcreate.outputs.pull-request-operation == 'created'
+        run: gh pr review --approve "${{ steps.prcreate.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.token }}
+      - uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.token }}
+          pull-request-number: ${{ steps.prcreate.outputs.pull-request-number }}
+          merge-method: squash
+  deployEE:
+    needs:
+      - merge_release
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/build_ee.yml@main
     with:
       quay_username: ${{ inputs.quay_username }}
@@ -174,6 +255,7 @@ jobs:
   send-message:
     needs:
       - release_check
+      - calculate_version
     runs-on: ubuntu-latest
     name: Send message via Matrix
     steps:
@@ -185,7 +267,7 @@ jobs:
           channel: '!pMZboYFCScZJfXmOtH:ansible.im'  # This is Ansible Social
           messagetype: 'm.text'
           message: |
-            @newsbot ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ inputs.collection_version }} has been released.\
+            @newsbot ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ needs.calculate_version.outputs.collection_version }} has been released.\
             ${{ inputs.matrix_message }}\
             Visit ${{ inputs.collection_repo }} For more information and updates.
       - name: Send message to our channel
@@ -196,7 +278,7 @@ jobs:
           channel: '!ccrdinGkMeyakqWzIM:matrix.org'  # This is our room
           messagetype: 'm.text'
           message: |
-            ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ inputs.collection_version }} has been released.\
+            ${{ inputs.collection_namespace_1 }}.${{ inputs.collection_name_1 }} ${{ needs.calculate_version.outputs.collection_version }} has been released.\
             ${{ inputs.matrix_message }}\
             Visit ${{ inputs.collection_repo }} For more information and updates.
 ...
