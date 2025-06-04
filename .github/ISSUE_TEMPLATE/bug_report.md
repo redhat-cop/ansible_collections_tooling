@@ -1,3 +1,4 @@
+<!--- markdownlint-disable -->
 ---
 name: Bug report
 about: >
