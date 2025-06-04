@@ -40,8 +40,11 @@ on:
         description: Where to pull the code from
         type: string
     secrets:
-      api_key:
-        description: API key for galaxy
+      api_push_key:
+        description: API key for galaxy push
+        required: true
+      api_pull_key:
+        description: API key for galaxy pull
         required: true
       token:
         description: token for uploading tarballs to a release
@@ -73,11 +76,11 @@ jobs:
           collection_name: ${{ inputs.collection_name }}
           collection_version: ${{ inputs.collection_version }}
           collection_repo: ${{ inputs.collection_repo }}
-          ansible_ah_token: ${{ secrets.api_key }}
+          ansible_ah_token: ${{ secrets.api_pull_key }}
 
       - name: Publish to galaxy
         if: ${{ inputs.galaxy_publish }}
-        run: ansible-galaxy collection publish --api-key=${{ secrets.api_key }} ${{ steps.build.outputs.tar_file }} --server ${{ inputs.publish_url }}
+        run: ansible-galaxy collection publish --api-key=${{ secrets.api_push_key }} ${{ steps.build.outputs.tar_file }} --server ${{ inputs.publish_url }}
 
       - name: "Publish the collection on Automation Hub"
         if: ${{ inputs.ah_publish }}  # failed automationhub job not prohibit galaxy job
@@ -88,7 +91,7 @@ jobs:
           [galaxy_server.rh_automation_hub]
           url=https://cloud.redhat.com/api/automation-hub/
           auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-          token=${{ secrets.api_key }}
+          token=${{ secrets.api_push_key }}
           EOF
           ansible-galaxy collection publish ${{ steps.build.outputs.tar_file }}
           rm ansible.cfg
@@ -99,5 +102,5 @@ jobs:
           repo_token: ${{ secrets.token }}
           file: ${{ steps.build.outputs.tar_file }}
           tag: ${{ inputs.collection_version }}
-          overwrite: true
+          overwrite: false
 ...
