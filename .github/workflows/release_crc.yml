@@ -102,5 +102,5 @@ jobs:
           repo_token: ${{ secrets.token }}
           file: ${{ steps.build.outputs.tar_file }}
           tag: ${{ inputs.collection_version }}
-          overwrite: false
+          overwrite: true
 ...
