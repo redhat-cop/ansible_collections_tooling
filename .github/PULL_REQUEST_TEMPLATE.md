@@ -1,4 +1,4 @@
-<!-- markdownlint-disable-file -->
+<!--- markdownlint-disable -->
 # What does this PR do?
 
 <!--- Brief explanation of the code or documentation change you've made -->

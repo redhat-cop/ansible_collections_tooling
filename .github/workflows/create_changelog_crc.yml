@@ -1,0 +1,59 @@
+---
+name: create changelog
+on:
+  workflow_call:
+    inputs:
+      collection_namespace:
+        description: "Install collection python dependencies"
+        required: true
+        type: string
+      collection_name:
+        description: "Path to the collection source"
+        required: true
+        type: string
+      collection_version:
+        description: The final collection path
+        required: false
+        type: string
+      collection_repo:
+        description: The collection url
+        required: false
+        type: string
+    secrets:
+      token:
+        description: token for uploading tarballs to a release
+        required: true
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_FORCE_COLOR: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install --upgrade ansible-core antsibull-changelog
+
+      - name: template galaxy file (appended version with -devel as this will remain in repo)
+        run: ansible all -i 'localhost,' -c local -m template -a "src=.github/files/galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }}-devel collection_repo=${{ inputs.collection_repo }}"
+        shell: bash
+
+      - name: Run changelog
+        run: antsibull-changelog release --verbose --version ${{ inputs.collection_version }}
+
+      - name: Push to release branch
+        id: push_changelog
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: "${{ secrets.token }}"
+          add_timestamp: false
+          commit_prefix: "[AUTO]"
+          commit_message: "Update changelog ${{ inputs.collection_version }}"
+          force: false
+          target_branch: release/${{ inputs.collection_version }}
+...

@@ -1,4 +1,4 @@
-<!-- markdownlint-disable-file -->
+<!--- markdownlint-disable -->
 ---
 name: Bug report
 about: >
