@@ -227,7 +227,7 @@ jobs:
         id: prcreate
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.token }}
+          token: ${{ secrets.git_token }}
           base: devel
           branch: release/${{ needs.calculate_version.outputs.collection_version }}
           delete-branch: false
@@ -244,10 +244,10 @@ jobs:
         if: steps.prcreate.outputs.pull-request-operation == 'created'
         run: gh pr review --approve "${{ steps.prcreate.outputs.pull-request-number }}"
         env:
-          GH_TOKEN: ${{ secrets.token }}
+          GH_TOKEN: ${{ secrets.git_token }}
       - uses: peter-evans/enable-pull-request-automerge@v3
         with:
-          token: ${{ secrets.token }}
+          token: ${{ secrets.git_token }}
           pull-request-number: ${{ steps.prcreate.outputs.pull-request-number }}
           merge-method: squash
   deployEE:
