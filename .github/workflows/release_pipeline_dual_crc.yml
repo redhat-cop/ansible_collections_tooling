@@ -110,7 +110,7 @@ jobs:
       - prechecks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get the most recent tag
         uses: actions-ecosystem/action-get-latest-tag@v1
@@ -118,10 +118,16 @@ jobs:
         with:
           semver_only: true
 
+      - name: Checkout tooling repo
+        uses: actions/checkout@v4
+        with:
+          repository: redhat-cop/ansible_collections_tooling
+          path: ansible_collections_tooling
+
       - name: Calculate bump level
         id: bump_level
         shell: bash
-        run: .github/files/calculate_change.sh
+        run: ansible_collections_tooling/.github/release/calculate_change.sh
 
       - name: Bump version
         uses: actions-ecosystem/action-bump-semver@v1
