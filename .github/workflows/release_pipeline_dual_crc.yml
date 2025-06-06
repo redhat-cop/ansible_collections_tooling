@@ -233,10 +233,6 @@ jobs:
             --body 'Updated with changelog for release ${{ needs.calculate_version.outputs.collection_version }}' \
         env:
           GH_TOKEN: ${{ secrets.git_token }}
-      - name: Auto approve PR
-        run: gh pr review --approve "release/${{ needs.calculate_version.outputs.collection_version }}"
-        env:
-          GH_TOKEN: ${{ secrets.git_token }}
       - name: Merge PR
         run: gh pr merge "release/${{ needs.calculate_version.outputs.collection_version }}" --rebase --admin
         env:
