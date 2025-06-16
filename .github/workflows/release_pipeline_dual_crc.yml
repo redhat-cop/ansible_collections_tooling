@@ -143,6 +143,7 @@ jobs:
   changelog:
     needs:
       - calculate_version
+    if: (needs.calculate_version.outputs.change_level != 'major' && needs.calculate_version.outputs.change_present != 'false') || github.event_name == 'workflow_dispatch'
     uses: redhat-cop/ansible_collections_tooling/.github/workflows/create_changelog_crc.yml@main
     with:
       collection_namespace: ${{ inputs.collection_namespace_1 }}
