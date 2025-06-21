@@ -6,38 +6,10 @@ name: pre-commit tests
 
 on:
   workflow_call:
-    inputs:
-      collection_namespace:
-        description: "Install collection python dependencies"
-        required: true
-        type: string
-      collection_name:
-        description: "Path to the collection source"
-        required: true
-        type: string
-      collection_version:
-        description: The final collection path
-        required: false
-        type: string
-      collection_repo:
-        description: The collection url
-        required: false
-        type: string
-    secrets:
-      ansible_ah_token:
-        description: API key for galaxy
-        required: true
 
 jobs:
   pre-commit:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit_crc.yml@main"
-    with:
-      collection_namespace: ${{ inputs.collection_namespace }}
-      collection_name: ${{ inputs.collection_name }}
-      collection_version: ${{ inputs.collection_version }}
-      collection_repo: ${{ inputs.collection_repo }}
-    secrets:
-      ansible_ah_token: ${{ secrets.ansible_ah_token }}
   build-import:
     uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@main
   markdown-link-check:
