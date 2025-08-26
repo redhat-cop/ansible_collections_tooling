@@ -37,7 +37,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Ansible
-        run: pip install --upgrade ansible-core antsibull-changelog
+        run: pip install --upgrade "ansible-core>=2.15,<2.19" antsibull-changelog
 
       - name: template galaxy file (appended version with -devel as this will remain in repo)
         run: ansible all -i 'localhost,' -c local -m template -a "src=.github/files/galaxy.yml.j2 dest=galaxy.yml" --extra-vars "collection_namespace=${{ inputs.collection_namespace }} collection_name=${{ inputs.collection_name }} collection_version=${{ inputs.collection_version }}-devel collection_repo=${{ inputs.collection_repo }}"
