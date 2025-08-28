@@ -5,6 +5,7 @@ name: pre-commit tests
 
 
 on:
+  pull_request_target:
   workflow_call:
     inputs:
       collection_namespace:
