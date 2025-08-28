@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install Ansible
-        run: pip install --upgrade ansible-core
+        run: pip install --upgrade "ansible-core>=2.15,<2.19"
         if: inputs.collection_dependencies
       - uses: pre-commit/action@v3.0.1
 ...

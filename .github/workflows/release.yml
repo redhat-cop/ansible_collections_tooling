@@ -63,7 +63,7 @@ jobs:
         run: mv .github/files/ansible.cfg . || echo "Nothing to move"
 
       - name: Install Ansible
-        run: pip install --upgrade ansible-core
+        run: pip install --upgrade "ansible-core>=2.15,<2.19"
 
       - name: Build and install the collection
         id: build

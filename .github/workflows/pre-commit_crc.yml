@@ -5,6 +5,7 @@ name: pre-commit tests
 
 
 on:
+  pull_request_target:
   workflow_call:
     inputs:
       collection_namespace:
@@ -37,7 +38,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install Ansible
-        run: pip install --upgrade ansible-core pyyaml==6.0.1
+        run: pip install --upgrade "ansible-core>=2.15,<2.19" pyyaml==6.0.1
       - name: Install collection
         run: ansible-galaxy collection install . -vvvv
         shell: bash
