@@ -29,6 +29,9 @@ on:
         required: true
 
 jobs:
+  changelog:
+    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@main
+    if: github.event_name == 'pull_request'
   pre-commit:
     uses: "redhat-cop/ansible_collections_tooling/.github/workflows/pre-commit_crc.yml@main"
     with:
