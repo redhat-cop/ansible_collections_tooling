@@ -37,7 +37,7 @@ jobs:
           ref: "${{ github.event.pull_request.merge_commit_sha }}"
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install Ansible
         run: pip install --upgrade "ansible-core>=2.15,<2.19" pyyaml==6.0.1
       - name: Install collection
