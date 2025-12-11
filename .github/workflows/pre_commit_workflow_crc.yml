@@ -23,6 +23,10 @@ on:
         description: The collection url
         required: false
         type: string
+      base_branch:
+        description: Base branch for markdown link check (defaults to repository default branch)
+        required: false
+        type: string
     secrets:
       ansible_ah_token:
         description: API key for galaxy
@@ -53,6 +57,7 @@ jobs:
           use-verbose-mode: 'yes'
           check-modified-files-only: 'yes'
           config-file: '.mlc_config.json'
+          base-branch: ${{ inputs.base_branch || github.event.repository.default_branch || 'main' }}
   all_green:
     if: ${{ always() }}
     needs:
