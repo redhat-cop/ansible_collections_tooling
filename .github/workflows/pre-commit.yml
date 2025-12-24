@@ -34,8 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
