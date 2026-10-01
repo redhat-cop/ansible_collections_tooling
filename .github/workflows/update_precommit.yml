@@ -7,6 +7,14 @@ on:
         description: github.actor for the PR
         required: true
         type: string
+      freeze:
+        description: >-
+          Pin hook revs to immutable commit SHAs via
+          `pre-commit autoupdate --freeze` (recommended).
+          When false, updates to the latest tags only.
+        required: false
+        type: boolean
+        default: false
     secrets:
       token:
         description: github secrets.token
@@ -24,7 +32,12 @@ jobs:
         run: pip install --upgrade pre-commit
 
       - name: Update pre-commit
-        run: pre-commit autoupdate
+        run: |
+          if [ "${{ inputs.freeze }}" = "true" ]; then
+            pre-commit autoupdate --freeze
+          else
+            pre-commit autoupdate
+          fi
 
       - uses: actions/setup-python@v6
         with:
